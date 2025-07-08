@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学校数据比对工具</title>
+    <!-- 引入 SheetJS 库，用于处理 Excel 文件 -->
+    <!-- 优先使用本地文件，避免网络问题 -->
+    <script src="xlsx.full.min.js"></script>
+    <!-- 备用CDN引用 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <div class="header-icon">📊</div>
+                <h1 class="header-title">表格数据工具</h1>
+            </div>
+            <div class="header-actions">
+                <button class="btn-secondary nav-tab active" data-page="compare-page">🔄 对比功能</button>
+                <button class="btn-secondary nav-tab" data-page="stats-page">📊 统计功能</button>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <!-- 侧边栏 -->
+            <div class="left-panel">
+                <div class="panel-title">
+                    <div class="panel-title-icon">⚙️</div>
+                    功能选择
+                </div>
+                
+                <div class="features-list">
+                    <div class="feature-item active" data-feature="compare">
+                        <div class="feature-icon">⚡</div>
+                        <div class="feature-title">智能比对</div>
+                        <div class="feature-desc">自动识别数据差异，快速定位不一致内容</div>
+                    </div>
+                    <div class="feature-item" data-feature="stats">
+                        <div class="feature-icon">📈</div>
+                        <div class="feature-title">数据统计</div>
+                        <div class="feature-desc">提供详细的数据分析报告和统计信息</div>
+                    </div>
+                    <div class="feature-item" data-feature="export">
+                        <div class="feature-icon">💾</div>
+                        <div class="feature-title">结果导出</div>
+                        <div class="feature-desc">支持多种格式导出比对结果</div>
+                    </div>
+                </div>
+
+                <div class="stats-panel">
+                    <div class="stats-title">📊 使用统计</div>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-number">12</div>
+                            <div class="stat-label">今日比对</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">245</div>
+                            <div class="stat-label">总计处理</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">98%</div>
+                            <div class="stat-label">准确率</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">5.2s</div>
+                            <div class="stat-label">平均耗时</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <div class="quick-actions-title">快速操作</div>
+                    <button class="quick-btn">
+                        📋 查看历史记录
+                    </button>
+                    <button class="quick-btn">
+                        ⚙️ 设置比对规则
+                    </button>
+                    <button class="quick-btn">
+                        📤 批量导出结果
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 主内容区 -->
+            <div class="right-panel">
+                <!-- 对比功能页面 -->
+                <div id="compare-page" class="app-page active">
+                    <div class="title-section">
+                        <h2 class="main-title">学校数据比对工具</h2>
+                        <p class="subtitle">上传两个Excel表格，工具将会找出显示所有有不一致的数据</p>
+                    </div>
+
+                    <div class="upload-section">
+                        <div class="upload-card" id="upload-area-A">
+                            <input type="file" id="fileA" accept=".xlsx, .xls" class="file-input">
+                            <div class="upload-icon">📁</div>
+                            <h3 class="upload-title">上传旧表格 (A)</h3>
+                            <p class="upload-subtitle">点击或拖拽文件到此区域</p>
+                            <div class="file-status" id="sheetsA-container">
+                                <div class="file-status-title">表格A工作表</div>
+                                <div class="file-count">已选择 <span class="sheets-count">0</span> 个工作表</div>
+                                <div id="sheetsA-list" class="sheets-list">
+                                    <!-- 工作表复选框将动态添加到这里 -->
+                                </div>
+                            </div>
+                            <button class="upload-btn" id="selectAllA">全选</button>
+                        </div>
+
+                        <div class="upload-card" id="upload-area-B">
+                            <input type="file" id="fileB" accept=".xlsx, .xls" class="file-input">
+                            <div class="upload-icon">📁</div>
+                            <h3 class="upload-title">上传新表格 (B)</h3>
+                            <p class="upload-subtitle">点击或拖拽文件到此区域</p>
+                            <div class="file-status" id="sheetsB-container">
+                                <div class="file-status-title">表格B工作表</div>
+                                <div class="file-count">已选择 <span class="sheets-count">0</span> 个工作表</div>
+                                <div id="sheetsB-list" class="sheets-list">
+                                    <!-- 工作表复选框将动态添加到这里 -->
+                                </div>
+                            </div>
+                            <button class="upload-btn" id="selectAllB">全选</button>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <div class="info-icon">ℹ</div>
+                        <div class="info-text">
+                            系统将自动使用<strong>姓名</strong>作为匹配依据，找到相同姓名的学生后，自动比对其他字段，有不同的信息就会提示更新。
+                        </div>
+                    </div>
+
+                    <div class="search-section">
+                        <div class="search-row">
+                            <input type="text" id="searchInput" class="search-input" placeholder="搜索学生姓名">
+                            <select id="classFilter" class="search-select">
+                                <option value="all">所有班级</option>
+                                <!-- 班级选项将动态添加 -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- 新增自动检测筛选容器 -->
+                    <div id="compare-filters-container" class="auto-filters-container hidden">
+                        <div class="filters-header">
+                            <h4>自动检测筛选</h4>
+                            <button type="button" class="clear-filters-btn" id="clearCompareFilters">清除筛选</button>
+                        </div>
+                        <div class="filter-status hidden"></div>
+                        <div id="compare-filters" class="filters-grid"></div>
+                    </div>
+
+                    <button id="compareBtn" class="compare-btn">
+                        🔍 立即比对
+                    </button>
+                    
+                    <div id="status" class="status-message"></div>
+
+                    <!-- 比对结果区域 -->
+                    <div id="differences-container" class="differences-container hidden">
+                        <!-- 统计卡片区域 -->
+                        <div class="stats-cards" id="stats-cards">
+                            <!-- 统计卡片将由JS动态生成 -->
+                        </div>
+                        
+                        <!-- 分段控制器/标签页 -->
+                        <div class="segmented-control" id="result-tabs">
+                            <!-- 标签页将由JS动态生成 -->
+                        </div>
+                        
+                        <!-- 表格容器 -->
+                        <div id="differences-table-container" class="table-responsive">
+                            <!-- 差异表格将在这里显示 -->
+                        </div>
+                        
+                        <!-- 操作按钮 -->
+                        <div class="action-buttons">
+                            <button id="undoUpdateBtn" class="secondary-button" disabled>撤销更新</button>
+                            <button id="confirmUpdateBtn" class="confirm-button">确认并导出</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 统计功能页面 -->
+                <div id="stats-page" class="app-page">
+                    <div class="title-section">
+                        <h2 class="main-title">学校数据统计分析</h2>
+                        <p class="subtitle">上传Excel表格，系统将生成详细的数据分析报表</p>
+                    </div>
+                    
+                    <!-- 添加模式选择按钮组 -->
+                    <div class="mode-selector">
+                        <div class="mode-label">选择统计模式：</div>
+                        <div class="mode-buttons">
+                            <button id="normalModeBtn" class="mode-button active">普通模式</button>
+                            <button id="templateModeBtn" class="mode-button">模板模式</button>
+                        </div>
+                    </div>
+                    
+                    <div class="upload-section">
+                        <div class="upload-card" id="upload-area-stats">
+                            <input type="file" id="fileStats" accept=".xlsx, .xls" class="file-input">
+                            <div class="upload-icon">📁</div>
+                            <h3 class="upload-title">上传数据表格</h3>
+                            <p class="upload-subtitle">点击或拖拽文件到此区域</p>
+                            <div class="file-status">
+                                <div class="file-status-title">工作表信息</div>
+                                <div class="file-count file-name"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 模板模式配置区域（默认隐藏） -->
+                    <div id="template-config-container" class="template-config-container hidden">
+                        <div class="template-header">
+                            <h4>模板配置</h4>
+                        </div>
+                        <div id="template-fields-container" class="template-fields-container">
+                            <!-- 模板字段配置将在这里动态生成 -->
+                        </div>
+                        <div class="template-actions">
+                            <button id="saveTemplateBtn" class="secondary-button">保存模板</button>
+                            <button id="loadTemplateBtn" class="secondary-button">加载模板</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 自动检测筛选容器 -->
+                    <div id="stats-filters-container" class="auto-filters-container hidden">
+                        <div class="filters-header">
+                            <h4>自动检测筛选</h4>
+                            <button type="button" class="clear-filters-btn" id="clearStatsFilters">清除筛选</button>
+                        </div>
+                        <div class="filter-status hidden"></div>
+                        <div id="stats-filters" class="filters-grid"></div>
+                    </div>
+                    
+                    <button id="generateStatsBtn" class="compare-btn">
+                        📊 生成统计报表
+                    </button>
+
+                    <div id="stats-status" class="status-message"></div>
+                    
+                    <!-- 统计结果区域 -->
+                    <div id="stats-results-container" class="stats-results-container hidden">
+                        <h2>统计结果</h2>
+                        
+                        <!-- 统计表格区域 -->
+                        <div class="stats-table-container">
+                            <h3>详细统计数据</h3>
+                            <div class="table-responsive" id="stats-table-container">
+                                <!-- 统计表格将在这里显示 -->
+                            </div>
+                        </div>
+                        
+                        <!-- 导出按钮 -->
+                        <div class="action-buttons">
+                            <button id="exportStatsBtn" class="confirm-button">导出统计报表</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        一个专为学校数据管理设计的高效工具
+    </div>
+
+    <!-- 添加悬浮快速更新按钮 -->
+    <div id="quick-update-btn" class="quick-update-button hidden">
+        快速更新
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
